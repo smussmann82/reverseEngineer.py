@@ -8,8 +8,8 @@ import sys
 
 def main():
 	input = ComLine(sys.argv[1:])
-	vcf_file = VCF(input.args.vcf)
 	snps_file = UNSNPS(input.args.usnps)
+	vcf_file = VCF(input.args.vcf,snps_file.data)
 	vcf_file.readFile()
 	snps_file.readFile()
 	#snps_file.printf()
