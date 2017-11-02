@@ -15,6 +15,7 @@ def main():
 	#snps_file.printf()
 	#vcf_file.printf()
 	snps_file.parseFile()
+	vcf_file.parseFile()
 
 main()
 

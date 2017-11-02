@@ -43,5 +43,5 @@ class UNSNPS():
 				counter+=1
 				#print(y)
 				self.data[counter][templist[0]] = self.codes[y] #add [locus][individual] = [genotype] to dictionary
-		print(self.data)
+		#print(self.data)
 		
