@@ -27,9 +27,33 @@ my( $loci, $out, $remove ) = &parsecom( \%opts );
 # declare variables
 my @lociLines;
 my @removeLines;
+my %removeHash;
+my %hoa;
 
 &filetoarray( $loci, \@lociLines );
 &filetoarray( $remove, \@removeLines );
+
+&makehash(\@removeLines, \%removeHash );
+&parseloci( \@lociLines, \%hoa );
+&deleteloci( \%removeHash, \%hoa );
+
+open(OUT, '>', $out ) or die "Can't open $out: $!\n\n";
+
+my $counter = 0;
+foreach my $locus( sort {$a<=>$b} keys %hoa ){
+	$counter++;
+	foreach my $seq( @{$hoa{$locus}} ){
+		if( $seq =~ /\|(\d+)\|$/ ){
+			$seq =~ s/$1/$counter/ee;
+		}
+		print OUT $seq, "\n";
+	}
+}
+
+close OUT;
+
+#print Dumper(\%removeHash);
+#print Dumper(\%hoa);
 
 exit;
 
@@ -69,6 +93,9 @@ sub parsecom{
 
 	my $remove = $opts{r} || die "List of loci to be removed not specified.\n\n"; #used to specify the list of loci to be removed
 
+	my @temp = split(/\./, $loci);
+	$out = "$temp[0].unlinked_snps.loci";
+
 	return( $loci, $out, $remove );
 
 }
@@ -98,6 +125,57 @@ sub filetoarray{
 
   # close input file
   close FILE;
+
+}
+
+#####################################################################################################
+# subroutine to read removeLines into hash
+
+sub makehash{
+
+	my( $arrayRef, $hashRef) = @_;
+
+	foreach my $line( @$arrayRef ){
+		$$hashRef{$line}++;
+	}
+
+}
+#####################################################################################################
+# subroutine to parse .loci file into hash of arrays
+
+sub parseloci{
+
+	my( $arrayRef, $hashRef) = @_;
+
+	my @locuslines;
+
+	foreach my $line( @$arrayRef ){
+		if( $line !~ /^\/\// ){
+			push( @locuslines, $line );
+		}else{
+			if( $line =~ /\|(\d+)\|$/ ){
+				push( @locuslines, $line );
+				foreach my $seq( @locuslines ){
+					push( @{$$hashRef{$1}}, $seq );			
+				}
+				@locuslines = ();
+			}
+		}
+	}
+
+}
+
+
+#####################################################################################################
+# subroutine to remove loci from hash
+
+sub deleteloci{
+
+	my( $hashRef, $hoaRef  ) = @_;
+
+	for my $locus( sort keys %$hashRef ){
+		delete $$hoaRef{$locus};
+	}
 
 }
 
