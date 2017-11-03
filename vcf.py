@@ -6,12 +6,12 @@ class VCF():
 	'Class for working with VCF file'
 	
 
-	def __init__(self, infile, dictofdicts):
+	def __init__(self, infile, dictofdicts,out):
 		self.vcf_file = infile
+		self.outfile = out
 		self.content = list()
 		self.dictofdicts = dictofdicts
 		self.loci = collections.defaultdict(list)
-		#self.data = collections.defaultdict(dict)
 
 	def readFile(self):
 		with open(self.vcf_file) as f:
@@ -22,25 +22,29 @@ class VCF():
 		for x in self.content:
 			print(x)
 
+	def writeHeader(self):
+		fn = open(self.outfile, 'w')
+		for i in range(0,12):
+			fn.write(self.content[i])
+			fn.write("\n")
+		fn.close()
+
 	def parseFile(self):
+		self.writeHeader()
 		del self.content[:11] # remove most header lines
 		header = self.content.pop(0).split() # retrieve line with individual names
-		print(header)
 
 		for x in self.content:
 			templist = x.split()
 			self.loci[int(templist[0])].append(x)
 
-		index = 1
+		index = 1 #index counter for the unlinked_snps data
 
-		#print(self.loci)
 		od = collections.OrderedDict(sorted(self.loci.items()))
 		for k,dk in od.iteritems():
-			print(k)
-			snpcounter = 0
+			snpcounter = 0 #index counter for the snps at each locus
 			locusdata = collections.defaultdict(dict)
 			for snp in dk:
-				#print(snp)
 				temp = snp.split() #split line for this locus
 				locusdict = self.makeLocusDict(temp[3],temp[4]) #create dictionary specific to locus
 				for i in range(9, len(temp)):
@@ -59,26 +63,21 @@ class VCF():
 						loc = "TG"
 
 					locusdata[snpcounter][header[i]] = loc
-					#print(templocus)
-					#print(temp[i])
 
 				snpcounter+=1
-				#print(locusdict)
-			print(locusdata)
-			if(self.compareDicts(locusdata,index)) == True:
+
+			if(self.compareDicts(locusdata,index,dk)) == True:
 				index+=1
 				
 
-	def compareDicts(self,dict1,index):
+	def compareDicts(self,dict1,index,snps):
 		for k, dk in dict1.iteritems():
 			if(dk == self.dictofdicts[index]):
-				print("Match")
-				print(k)
-				print(index)
+				fn = open(self.outfile, 'a')
+				fn.write(snps[k])
+				fn.write("\n")
+				fn.close()
 				return True
-			else:
-				print("No Match")
-		print("NEVER MATCHED")
 		return False
 
 	def makeLocusDict(self,ref,alt):
